@@ -69,7 +69,14 @@ class TarefaController {
    * @param {Response} ctx.response
    * @param {View} ctx.view
    */
-  async show ({ params, request, response, view }) {
+  async show ({ params, request, response, view, auth }) {
+    const tarefa = await Tarefa.query().where('id', params.id)
+    .where('user_id', '=', auth.user.id).first();
+
+    if(!tarefa){
+      return response.status(400).send({message: 'Nenhum registro'});
+    }
+    return tarefa;
   }
 
   /**
@@ -92,7 +99,23 @@ class TarefaController {
    * @param {Request} ctx.request
    * @param {Response} ctx.response
    */
-  async update ({ params, request, response }) {
+  async update ({ params, request, response, auth }) {
+    const {titulo, descricao} = request.all()
+
+    const tarefa = await Tarefa.query().where('id', params.id)
+    .where('user_id', '=', auth.user.id).first();
+
+    if(!tarefa){
+      return response.status(400).send({message: 'Not registered on database'});
+    }
+      tarefa.titulo = titulo;
+      tarefa.descricao = descricao;
+      tarefa.id = params.id;
+
+      await tarefa.save();
+
+    return tarefa;
+
   }
 
   /**
@@ -103,7 +126,18 @@ class TarefaController {
    * @param {Request} ctx.request
    * @param {Response} ctx.response
    */
-  async destroy ({ params, request, response }) {
+  async destroy ({ params, request, response, auth}) {
+
+    const tarefa = await Tarefa.query().where('id', params.id)
+    .where('user_id', '=', auth.user.id).first();
+
+    if(!tarefa){
+      return response.status(400).send({message: 'Not registered on database'});
+    }
+
+    await tarefa.delete();
+
+    return response.status(200).send({message: 'Task removed from database'})
   }
 }
 
